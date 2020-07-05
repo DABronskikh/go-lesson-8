@@ -3,21 +3,29 @@ package transactions
 import (
 	"bytes"
 	"encoding/csv"
+	"encoding/json"
+	"encoding/xml"
 	"io"
 	"io/ioutil"
 	"log"
+	"os"
 	"strconv"
 	"sync"
 	"time"
 )
 
 type Transaction struct {
-	XMLName string
-	Id      string
-	From    string
-	To      string
-	Amount  int64
-	Created int64
+	XMLName string `xml:"transactions"`
+	Id      string `json:"id" xml:"id"`
+	From    string `json:"from" xml:"from"`
+	To      string `json:"to" xml:"to"`
+	Amount  int64  `json:"amount" xml:"amount"`
+	Created int64  `json:"created" xml:"created"`
+}
+
+type Transactions struct {
+	XMLName      string `xml:"transactions"`
+	Transactions []*Transaction
 }
 
 type Service struct {
@@ -121,4 +129,73 @@ func MapRowToTransaction(records []string) (*Transaction, error) {
 	}
 
 	return tr, nil
+}
+
+func (s *Service) ExportJSON(filename string) error {
+	encodedJson, err := json.Marshal(s.Transactions)
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+
+	file, err := os.Create(filename)
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+	defer file.Close()
+	file.Write(encodedJson)
+
+	return nil
+}
+
+func (s *Service) ImportJSON(filename string) error {
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+
+	err = json.Unmarshal(data, &s.Transactions)
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+
+	return nil
+}
+
+func (t *Transactions) ExportXML(filename string) error {
+	encodedXML, err := xml.Marshal(t)
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+	encodedXML = append([]byte(xml.Header), encodedXML...)
+
+	file, err := os.Create(filename)
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+	defer file.Close()
+	file.Write(encodedXML)
+
+	return nil
+}
+
+func (t *Transactions) ImportXML(filename string) error {
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+
+	err = xml.Unmarshal(data, &t.Transactions)
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+
+	return nil
 }

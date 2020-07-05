@@ -10,6 +10,8 @@ import (
 
 func main() {
 	const filenameCSV = "demoFile.csv"
+	const filenameJSON = "demoFile.json"
+	const filenameXML = "demoFile.xml"
 
 	svc := transactions.NewService()
 	for i := 0; i < 20; i++ {
@@ -32,6 +34,33 @@ func main() {
 
 	fmt.Println("demoImportCSV = ", demoImportCSV)
 
+	//JSON
+	if err := svc.ExportJSON(filenameJSON); err != nil {
+		os.Exit(1)
+	}
+
+	demoImportJSON := transactions.NewService()
+	if err := demoImportJSON.ImportJSON(filenameJSON); err != nil {
+		os.Exit(1)
+	}
+
+	fmt.Println("demoImportJSON = ", demoImportJSON)
+
+	// XML
+	transactionsXML := &transactions.Transactions{
+		Transactions: svc.Transactions,
+	}
+
+	if err := transactionsXML.ExportXML(filenameXML); err != nil {
+		os.Exit(1)
+	}
+
+	demoImportXML := &transactions.Transactions{}
+	if err := demoImportXML.ImportXML(filenameXML); err != nil {
+		os.Exit(1)
+	}
+
+	fmt.Println("demoImportXML = ", demoImportXML)
 }
 
 func demoExportCSV(svc *transactions.Service, filename string) (err error) {
